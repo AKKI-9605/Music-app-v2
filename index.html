@@ -120,7 +120,6 @@
 
         .track-info { text-align: center; margin: 4px 0; position: relative; width: 100%; overflow: hidden; }
         
-        /* Smooth Marquee Container for Long Track Names */
         .marquee-box {
             width: 100%;
             overflow: hidden;
@@ -232,7 +231,8 @@
 
             <div class="upload-zone" id="upload-zone">
                 <i class="fa-solid fa-cloud-arrow-up"></i><p>Drag & Drop or Tap to Import</p>
-                <input type="file" id="file-input" multiple accept="audio/*">
+                <!-- Fixed iOS/iPad file picker acceptance pattern -->
+                <input type="file" id="file-input" multiple accept="audio/*,.mp3,.wav,.flac,.ogg,.aac,.m4a">
             </div>
 
             <div class="album-art-container" id="art-container">
