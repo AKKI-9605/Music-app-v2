@@ -118,11 +118,42 @@
         .album-art-container img { width: 100%; height: 100%; object-fit: cover; }
         .placeholder-art { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--text-muted); background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.2)); }
 
-        .track-info { text-align: center; margin: 4px 0; position: relative; }
-        .track-info h1 { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .track-info { text-align: center; margin: 4px 0; position: relative; width: 100%; overflow: hidden; }
+        
+        /* Smooth Marquee Container for Long Track Names */
+        .marquee-box {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+        .marquee-content {
+            display: inline-block;
+            font-size: 17px;
+            font-weight: 700;
+            padding-left: 100%;
+            animation: marquee 12s linear infinite;
+        }
+        .marquee-content:hover {
+            animation-play-state: paused;
+        }
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
         .track-info p { color: var(--text-muted); font-size: 12px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .meta-tags { font-size: 9px; color: #646885; margin-top: 4px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .badge-16d { font-size: 9px; background: var(--accent); color: #000; padding: 2px 6px; border-radius: 8px; font-weight: bold; display: none; }
+        
+        .title-flex-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .badge-16d { font-size: 9px; background: var(--accent); color: #000; padding: 2px 6px; border-radius: 8px; font-weight: bold; display: none; flex-shrink: 0; }
         .badge-16d.active { display: inline-block; }
 
         .playlist-wrapper { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
@@ -210,7 +241,12 @@
             </div>
 
             <div class="track-info">
-                <h1 id="main-title">No Track Selected <span id="badge-16d" class="badge-16d">16D</span></h1>
+                <div class="title-flex-row">
+                    <div class="marquee-box">
+                        <div class="marquee-content" id="main-title">No Track Selected</div>
+                    </div>
+                    <span id="badge-16d" class="badge-16d">16D</span>
+                </div>
                 <p id="main-artist">Import local audio files to begin</p>
                 <div class="meta-tags" id="main-meta"></div>
             </div>
@@ -619,8 +655,7 @@
             }
 
             updateDisplayInfo(track) {
-                this.mainTitle.innerHTML = `${track.title} <span id="badge-16d" class="badge-16d ${this.is16D ? 'active':''}">16D</span>`;
-                this.badge16d = document.getElementById('badge-16d');
+                this.mainTitle.innerText = track.title;
                 this.mainArtist.innerText = track.artist;
                 
                 let metaItems = [];
