@@ -804,7 +804,7 @@
             formatTime(s) { if (isNaN(s)) return "0:00"; const m = Math.floor(s / 60); const r = Math.floor(s % 60); return `${m}:${r < 10 ? '0' : ''}${r}`; }
             updateVolumeIcon() {
                 const icon = this.muteBtn.querySelector('i');
-                if (icon) icon.className = this.audio.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+                if (icon) icon.className = (this.audio.muted || this.outputLevel === 0) ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
                 this.muteBtn.setAttribute('aria-label', this.audio.muted ? 'Unmute audio' : 'Mute audio');
             }
 
@@ -812,7 +812,6 @@
                 this.outputLevel = Math.max(0, Math.min(1, this.outputLevel + delta));
                 if (this.masterGain && this.audioCtx) this.masterGain.gain.setTargetAtTime(this.outputLevel, this.audioCtx.currentTime, 0.04);
                 else this.audio.volume = this.outputLevel;
-                this.audio.muted = this.outputLevel === 0;
                 this.updateVolumeIcon();
             }
 
