@@ -437,13 +437,11 @@
                     if (this.wetGain && this.dryGain) {
                         const now = this.audioCtx.currentTime;
                         if (this.is16D) {
-                            this.wetGain.gain.setTargetAtTime(0.8, now, 0.5); 
-                            this.dryGain.gain.setTargetAtTime(1.8, now, 0.5);
-                            this.bassEQ.gain.setTargetAtTime(this.currentBassGain + 8, now, 0.5);
+                            this.wetGain.gain.setTargetAtTime(0.16, now, 0.8);
+                            this.dryGain.gain.setTargetAtTime(0.92, now, 0.8);
                         } else {
-                            this.wetGain.gain.setTargetAtTime(0, now, 0.5);
-                            this.dryGain.gain.setTargetAtTime(1.0, now, 0.5); 
-                            this.bassEQ.gain.setTargetAtTime(this.currentBassGain, now, 0.5);
+                            this.wetGain.gain.setTargetAtTime(0, now, 0.8);
+                            this.dryGain.gain.setTargetAtTime(1.0, now, 0.8);
                             this.panner.positionX.setTargetAtTime(0, now, 0.1);
                             this.panner.positionZ.setTargetAtTime(0, now, 0.1);
                             this.panner.positionY.setTargetAtTime(0, now, 0.1);
@@ -485,7 +483,8 @@
 
             fadeAudio(targetVol, duration, callback) {
                 clearInterval(this.fadeInterval);
-                const startVol = this.audio.volume;
+                const gainParam = this.masterGain && this.audioCtx ? this.masterGain.gain : null;
+                const startVol = gainParam ? gainParam.value : this.audio.volume;
                 const distance = targetVol - startVol;
                 
                 if (distance === 0) {
@@ -502,11 +501,13 @@
                     const nextVol = startVol + (distance * (currentStep / steps));
 
                     if (currentStep >= steps) {
-                        this.audio.volume = Math.max(0, Math.min(1, targetVol));
+                        if (gainParam) gainParam.setTargetAtTime(Math.max(0, Math.min(1, targetVol)), this.audioCtx.currentTime, 0.02);
+                        else this.audio.volume = Math.max(0, Math.min(1, targetVol));
                         clearInterval(this.fadeInterval);
                         if(callback) callback();
                     } else {
-                        this.audio.volume = Math.max(0, Math.min(1, nextVol));
+                        if (gainParam) gainParam.setTargetAtTime(Math.max(0, Math.min(1, nextVol)), this.audioCtx.currentTime, 0.02);
+                        else this.audio.volume = Math.max(0, Math.min(1, nextVol));
                     }
                 }, intervalTime);
             }
@@ -636,7 +637,8 @@
                 this.updateDisplayInfo(track); this.renderPlaylist();
                 
                 if (autostart) {
-                    this.audio.volume = 0;
+                    if (this.masterGain) this.masterGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                    else this.audio.volume = 0;
                     this.play();
                     this.fadeAudio(this.outputLevel, 400);
                 } else {
@@ -670,7 +672,8 @@
                 if (this.isPlaying) {
                     this.fadeAudio(0, 300, () => this.pause());
                 } else {
-                    this.audio.volume = 0;
+                    if (this.masterGain) this.masterGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                    else this.audio.volume = 0;
                     this.play();
                     this.fadeAudio(this.outputLevel, 300);
                 }
@@ -712,20 +715,39 @@
             onTimeUpdate() { if (!this.audio.duration) return; const perc = (this.audio.currentTime / this.audio.duration) * 100; this.progressFill.style.width = `${perc}%`; this.timeCurrent.innerText = this.formatTime(this.audio.currentTime); }
             seek(e) { if (!this.audio.duration) return; const rect = this.progressWrapper.getBoundingClientRect(); this.audio.currentTime = ((e.clientX - rect.left) / rect.width) * this.audio.duration; }
             formatTime(s) { if (isNaN(s)) return "0:00"; const m = Math.floor(s / 60); const r = Math.floor(s % 60); return `${m}:${r < 10 ? '0' : ''}${r}`; }
-            updateVolumeIcon() { if (this.audio.muted || this.audio.volume === 0) this.muteBtn.className = 'fa-solid fa-volume-xmark'; else if (this.audio.volume < 0.5) this.muteBtn.className = 'fa-solid fa-volume-low'; else this.muteBtn.className = 'fa-solid fa-volume-high'; }
+            updateVolumeIcon() {
+                const icon = this.muteBtn.querySelector('i');
+                if (icon) icon.className = this.audio.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+                this.muteBtn.setAttribute('aria-label', this.audio.muted ? 'Unmute audio' : 'Mute audio');
+            }
+
+            adjustOutputLevel(delta) {
+                this.outputLevel = Math.max(0, Math.min(1, this.outputLevel + delta));
+                if (this.masterGain && this.audioCtx) this.masterGain.gain.setTargetAtTime(this.outputLevel, this.audioCtx.currentTime, 0.04);
+                else this.audio.volume = this.outputLevel;
+                this.audio.muted = this.outputLevel === 0;
+                this.updateVolumeIcon();
+            }
 
             createReverbBuffer() {
                 const sampleRate = this.audioCtx.sampleRate;
-                const length = sampleRate * 2.5; 
+                const length = Math.floor(sampleRate * 2.1);
                 const impulse = this.audioCtx.createBuffer(2, length, sampleRate);
-                const left = impulse.getChannelData(0); const right = impulse.getChannelData(1);
-                let lastOutL = 0, lastOutR = 0;
-                
+                const left = impulse.getChannelData(0);
+                const right = impulse.getChannelData(1);
+                let smoothL = 0, smoothR = 0;
+
                 for (let i = 0; i < length; i++) {
-                    const decay = Math.exp(-i / (sampleRate * 0.5));
-                    let noiseL = (Math.random() * 2 - 1); let noiseR = (Math.random() * 2 - 1);
-                    lastOutL = noiseL * 0.2 + lastOutL * 0.8; lastOutR = noiseR * 0.2 + lastOutR * 0.8;
-                    left[i] = lastOutL * decay * 0.5; right[i] = lastOutR * decay * 0.5;
+                    const time = i / sampleRate;
+                    const early = time < 0.075 ? Math.exp(-time * 34) : 0;
+                    const tail = Math.exp(-time * 2.8);
+                    const noiseL = Math.random() * 2 - 1;
+                    const noiseR = Math.random() * 2 - 1;
+                    smoothL = smoothL * 0.72 + noiseL * 0.28;
+                    smoothR = smoothR * 0.72 + noiseR * 0.28;
+                    const reflections = early * (i % 4096 < 64 ? 0.16 : 0.035);
+                    left[i] = (smoothL * tail * 0.22) + reflections;
+                    right[i] = (smoothR * tail * 0.22) - reflections * 0.72;
                 }
                 return impulse;
             }
@@ -746,9 +768,13 @@
                     this.panner = this.audioCtx.createPanner();
                     this.panner.panningModel = 'HRTF';
                     this.panner.distanceModel = 'inverse';
-                    this.panner.refDistance = 1;
-                    this.panner.maxDistance = 10000;
-                    this.panner.rolloffFactor = 1;
+                    this.panner.refDistance = 1.2;
+                    this.panner.maxDistance = 8;
+                    this.panner.rolloffFactor = 0.35;
+                    this.panner.setPosition(0, 0, -1.8);
+                    if (this.audioCtx.listener && this.audioCtx.listener.setOrientation) {
+                        this.audioCtx.listener.setOrientation(0, 0, -1, 0, 1, 0);
+                    }
 
                     this.convolver = this.audioCtx.createConvolver();
                     this.convolver.buffer = this.createReverbBuffer();
@@ -756,8 +782,10 @@
                     this.dryGain = this.audioCtx.createGain();
                     this.wetGain = this.audioCtx.createGain();
                     
-                    this.dryGain.gain.value = this.is16D ? 1.8 : 1.0;
-                    this.wetGain.gain.value = this.is16D ? 0.8 : 0;
+                    this.dryGain.gain.value = this.is16D ? 0.92 : 1.0;
+                    this.wetGain.gain.value = this.is16D ? 0.16 : 0;
+                    this.masterGain = this.audioCtx.createGain();
+                    this.masterGain.gain.value = this.outputLevel;
 
                     this.analyser = this.audioCtx.createAnalyser();
                     this.analyser.fftSize = 128; 
@@ -773,7 +801,8 @@
                     this.convolver.connect(this.wetGain);
                     this.wetGain.connect(this.analyser);
                     
-                    this.analyser.connect(this.audioCtx.destination);
+                    this.analyser.connect(this.masterGain);
+                    this.masterGain.connect(this.audioCtx.destination);
                     
                     this.bufferLength = this.analyser.frequencyBinCount;
                     this.dataArray = new Uint8Array(this.bufferLength);
@@ -807,10 +836,10 @@
                     const speed = parseFloat(this.spatialSpeed.value);
                     this.spatialAngle += speed;
                     
-                    const radius = 3; 
+                    const radius = 1.8;
                     const x = Math.sin(this.spatialAngle) * radius;
-                    const z = Math.cos(this.spatialAngle) * radius;
-                    const y = Math.sin(this.spatialAngle * 2) * 0.5;
+                    const z = -Math.cos(this.spatialAngle) * radius;
+                    const y = Math.sin(this.spatialAngle * 0.5) * 0.32;
 
                     this.panner.positionX.setTargetAtTime(x, this.audioCtx.currentTime, 0.1);
                     this.panner.positionZ.setTargetAtTime(z, this.audioCtx.currentTime, 0.1);
