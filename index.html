@@ -854,25 +854,62 @@
                     this.trebleEQ = this.audioCtx.createBiquadFilter();
                     this.trebleEQ.type = 'highshelf'; this.trebleEQ.frequency.value = 3000;
                     
+                    this.lofiFilter = this.audioCtx.createBiquadFilter();
+                    this.lofiFilter.type = 'lowpass';
+                    this.lofiFilter.frequency.value = this.is16D ? 12800 : 20000;
+                    this.lofiFilter.Q.value = 0.45;
+
+                    this.tapeShaper = this.audioCtx.createWaveShaper();
+                    const curve = new Float32Array(2048);
+                    for (let i = 0; i < curve.length; i++) {
+                        const x = (i * 2) / (curve.length - 1) - 1;
+                        curve[i] = Math.tanh(x * 1.12) / Math.tanh(1.12);
+                    }
+                    this.tapeShaper.curve = curve;
+                    this.tapeShaper.oversample = '2x';
+
                     this.panner = this.audioCtx.createPanner();
                     this.panner.panningModel = 'HRTF';
                     this.panner.distanceModel = 'inverse';
-                    this.panner.refDistance = 1.2;
-                    this.panner.maxDistance = 8;
-                    this.panner.rolloffFactor = 0.35;
-                    this.panner.setPosition(0, 0, -1.8);
+                    this.panner.refDistance = 1.4;
+                    this.panner.maxDistance = 7;
+                    this.panner.rolloffFactor = 0.28;
+                    this.panner.setPosition(0, 0, -1.4);
                     if (this.audioCtx.listener && this.audioCtx.listener.setOrientation) {
                         this.audioCtx.listener.setOrientation(0, 0, -1, 0, 1, 0);
                     }
 
                     this.convolver = this.audioCtx.createConvolver();
                     this.convolver.buffer = this.createReverbBuffer();
-
                     this.dryGain = this.audioCtx.createGain();
                     this.wetGain = this.audioCtx.createGain();
-                    
-                    this.dryGain.gain.value = this.is16D ? 0.92 : 1.0;
-                    this.wetGain.gain.value = this.is16D ? 0.16 : 0;
+                    this.dryGain.gain.value = this.is16D ? 0.88 : 1;
+                    this.wetGain.gain.value = this.is16D ? 0.12 : 0;
+
+                    this.chorusLeftPan = this.audioCtx.createStereoPanner();
+                    this.chorusRightPan = this.audioCtx.createStereoPanner();
+                    this.chorusLeftPan.pan.value = -0.78;
+                    this.chorusRightPan.pan.value = 0.78;
+                    this.chorusLeftDelay = this.audioCtx.createDelay(0.08);
+                    this.chorusRightDelay = this.audioCtx.createDelay(0.08);
+                    this.chorusLeftDelay.delayTime.value = 0.014;
+                    this.chorusRightDelay.delayTime.value = 0.021;
+                    this.chorusLeftGain = this.audioCtx.createGain();
+                    this.chorusRightGain = this.audioCtx.createGain();
+                    this.chorusLeftGain.gain.value = this.is16D ? 0.055 : 0;
+                    this.chorusRightGain.gain.value = this.is16D ? 0.055 : 0;
+                    this.wowLfo = this.audioCtx.createOscillator();
+                    this.wowLfo.type = 'sine';
+                    this.wowLfo.frequency.value = 0.22;
+                    this.wowLeftDepth = this.audioCtx.createGain();
+                    this.wowRightDepth = this.audioCtx.createGain();
+                    this.wowLeftDepth.gain.value = 0.0018;
+                    this.wowRightDepth.gain.value = -0.0018;
+                    this.wowLfo.connect(this.wowLeftDepth);
+                    this.wowLfo.connect(this.wowRightDepth);
+                    this.wowLeftDepth.connect(this.chorusLeftDelay.delayTime);
+                    this.wowRightDepth.connect(this.chorusRightDelay.delayTime);
+                    this.wowLfo.start();
                     this.masterGain = this.audioCtx.createGain();
                     this.masterGain.gain.value = this.outputLevel;
 
@@ -881,15 +918,25 @@
                     
                     source.connect(this.bassEQ);
                     this.bassEQ.connect(this.trebleEQ);
-                    this.trebleEQ.connect(this.panner);
-                    
+                    this.trebleEQ.connect(this.lofiFilter);
+                    this.lofiFilter.connect(this.tapeShaper);
+                    this.tapeShaper.connect(this.panner);
+
                     this.panner.connect(this.dryGain);
                     this.dryGain.connect(this.analyser);
-                    
                     this.panner.connect(this.convolver);
                     this.convolver.connect(this.wetGain);
                     this.wetGain.connect(this.analyser);
-                    
+
+                    this.panner.connect(this.chorusLeftPan);
+                    this.chorusLeftPan.connect(this.chorusLeftDelay);
+                    this.chorusLeftDelay.connect(this.chorusLeftGain);
+                    this.chorusLeftGain.connect(this.analyser);
+                    this.panner.connect(this.chorusRightPan);
+                    this.chorusRightPan.connect(this.chorusRightDelay);
+                    this.chorusRightDelay.connect(this.chorusRightGain);
+                    this.chorusRightGain.connect(this.analyser);
+
                     this.analyser.connect(this.masterGain);
                     this.masterGain.connect(this.audioCtx.destination);
                     
@@ -925,14 +972,14 @@
                     const speed = parseFloat(this.spatialSpeed.value);
                     this.spatialAngle += speed;
                     
-                    const radius = 1.8;
+                    const radius = 1.35;
                     const x = Math.sin(this.spatialAngle) * radius;
-                    const z = -Math.cos(this.spatialAngle) * radius;
-                    const y = Math.sin(this.spatialAngle * 0.5) * 0.32;
+                    const z = -1.35 - Math.cos(this.spatialAngle * 0.72) * 0.42;
+                    const y = Math.sin(this.spatialAngle * 0.48) * 0.16;
 
-                    this.panner.positionX.setTargetAtTime(x, this.audioCtx.currentTime, 0.1);
-                    this.panner.positionZ.setTargetAtTime(z, this.audioCtx.currentTime, 0.1);
-                    this.panner.positionY.setTargetAtTime(y, this.audioCtx.currentTime, 0.1);
+                    this.panner.positionX.setTargetAtTime(x, this.audioCtx.currentTime, 0.16);
+                    this.panner.positionZ.setTargetAtTime(z, this.audioCtx.currentTime, 0.16);
+                    this.panner.positionY.setTargetAtTime(y, this.audioCtx.currentTime, 0.16);
                 }
 
                 if (!this.analyser || this.visStyle === 'off') { this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height); return; }
