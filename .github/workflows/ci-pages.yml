@@ -30,7 +30,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -72,6 +71,8 @@ jobs:
       - name: Commit refreshed screenshots
         run: |
           mkdir -p docs/screenshots
+          cp artifacts/screenshots/player-desktop.png docs/screenshots/
+          cp artifacts/screenshots/player-mobile.png docs/screenshots/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/screenshots/player-desktop.png docs/screenshots/player-mobile.png
