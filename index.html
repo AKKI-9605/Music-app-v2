@@ -330,7 +330,7 @@
                     <div class="marquee-box">
                         <div class="marquee-content" id="main-title">No Track Selected</div>
                     </div>
-                    <span id="badge-16d" class="badge-16d">16D</span>
+                    <span id="badge-16d" class="badge-16d">LO-FI 3D</span>
                 </div>
                 <p id="main-artist">Import local audio files to begin</p>
                 <div class="meta-tags" id="main-meta"></div>
@@ -387,8 +387,8 @@
 
                     <div class="settings-section">
                         <h4>Audio Processing</h4>
-                        <div class="setting-group"><label>16D HRTF Spatial</label><select id="spatial-select"><option value="off">Off</option><option value="on">On (Binaural 3D)</option></select></div>
-                        <div class="setting-group"><label>16D Orbit Speed</label><input type="range" id="spatial-speed" min="0.002" max="0.018" step="0.001" value="0.006"></div>
+                        <div class="setting-group"><label>Lo-fi Spatial Mix</label><select id="spatial-select"><option value="off">Off</option><option value="on">On (Warm 3D)</option></select></div>
+                        <div class="setting-group"><label>Spatial Movement</label><input type="range" id="spatial-speed" min="0.002" max="0.018" step="0.001" value="0.004"></div>
                         <div class="setting-group"><label>EQ Preset</label><select id="eq-preset"><option value="flat">Flat</option><option value="bass">Bass Boost</option><option value="vocal">Vocal</option><option value="pop">Pop</option><option value="rock">Rock</option></select></div>
                     </div>
 
@@ -522,17 +522,17 @@
                     this.is16D = e.target.value === 'on';
                     if (this.badge16d) this.badge16d.classList.toggle('active', this.is16D);
                     
-                    if (this.wetGain && this.dryGain) {
+                    if (this.wetGain && this.dryGain && this.audioCtx) {
                         const now = this.audioCtx.currentTime;
-                        if (this.is16D) {
-                            this.wetGain.gain.setTargetAtTime(0.16, now, 0.8);
-                            this.dryGain.gain.setTargetAtTime(0.92, now, 0.8);
-                        } else {
-                            this.wetGain.gain.setTargetAtTime(0, now, 0.8);
-                            this.dryGain.gain.setTargetAtTime(1.0, now, 0.8);
-                            this.panner.positionX.setTargetAtTime(0, now, 0.1);
-                            this.panner.positionZ.setTargetAtTime(0, now, 0.1);
-                            this.panner.positionY.setTargetAtTime(0, now, 0.1);
+                        this.wetGain.gain.setTargetAtTime(this.is16D ? 0.12 : 0, now, 0.7);
+                        this.dryGain.gain.setTargetAtTime(this.is16D ? 0.88 : 1, now, 0.7);
+                        if (this.lofiFilter) this.lofiFilter.frequency.setTargetAtTime(this.is16D ? 12800 : 20000, now, 0.7);
+                        if (this.chorusLeftGain) this.chorusLeftGain.gain.setTargetAtTime(this.is16D ? 0.055 : 0, now, 0.7);
+                        if (this.chorusRightGain) this.chorusRightGain.gain.setTargetAtTime(this.is16D ? 0.055 : 0, now, 0.7);
+                        if (!this.is16D && this.panner) {
+                            this.panner.positionX.setTargetAtTime(0, now, 0.2);
+                            this.panner.positionZ.setTargetAtTime(-1.4, now, 0.2);
+                            this.panner.positionY.setTargetAtTime(0, now, 0.2);
                         }
                     }
                 });
