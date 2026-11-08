@@ -722,6 +722,7 @@
                 this.updateDisplayInfo(track); this.renderPlaylist();
                 
                 if (autostart) {
+                    this.initAudioContext();
                     if (this.masterGain) this.masterGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
                     else this.audio.volume = 0;
                     this.play();
@@ -757,6 +758,7 @@
                 if (this.isPlaying) {
                     this.fadeAudio(0, 300, () => this.pause());
                 } else {
+                    this.initAudioContext();
                     if (this.masterGain) this.masterGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
                     else this.audio.volume = 0;
                     this.play();
