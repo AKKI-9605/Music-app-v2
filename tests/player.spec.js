@@ -22,6 +22,8 @@ test('desktop player loads with its main controls', async ({ page }) => {
   await expect(page.locator('#play-btn')).toBeVisible();
   await expect(page.locator('#next-btn')).toBeVisible();
   await expect(page.locator('#prev-btn')).toBeVisible();
+  await expect(page.locator('#mute-btn')).toBeVisible();
+  await expect(page.locator('#volume-slider')).toHaveCount(0);
 
   await page.screenshot({
     path: path.join(screenshotDir, 'player-desktop.png'),
@@ -43,6 +45,25 @@ test('settings can be opened, changed, and closed', async ({ page }) => {
   await expect(page.locator('#settings-modal')).not.toHaveClass(/open/);
 });
 
+test('mute control works without a volume slider', async ({ page }) => {
+  await page.goto('/');
+  const audio = page.locator('#audio-element');
+  await expect(page.locator('#volume-slider')).toHaveCount(0);
+  await expect(audio).toHaveJSProperty('muted', false);
+  await page.locator('#mute-btn').click();
+  await expect(audio).toHaveJSProperty('muted', true);
+  await expect(page.locator('#mute-btn')).toHaveAttribute('aria-label', 'Unmute audio');
+  await page.locator('#mute-btn').click();
+  await expect(audio).toHaveJSProperty('muted', false);
+});
+
+test('3D spatial audio setting can be enabled', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#settings-toggle-btn').click();
+  await page.locator('#spatial-select').selectOption('on');
+  await expect(page.locator('#badge-16d')).toHaveClass(/active/);
+});
+
 test('slash keyboard shortcut focuses playlist search', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('/');
@@ -59,6 +80,20 @@ test('mobile layout remains visible and usable', async ({ page }) => {
 
   await page.screenshot({
     path: path.join(screenshotDir, 'player-mobile.png'),
+    fullPage: true
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('iPad layout fits a tablet viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await page.goto('/');
+  await expect(page.locator('#app-container')).toBeVisible();
+  await expect(page.locator('#upload-zone')).toBeVisible();
+  await expect(page.locator('#play-btn')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(820);
+  await page.screenshot({
+    path: path.join(screenshotDir, 'player-ipad.png'),
     fullPage: true
   });
 });
