@@ -1,36 +1,97 @@
-# Music-app-v2
+# AKKI MUSIC — Pro Studio Edition 2.0
 
-A premium, client-side web audio player engineered for high-fidelity local playback. Music-app-v2 (AKKI Studio Edition) transforms standard local audio files into an immersive listening experience using the native Web Audio API, running entirely within the browser with zero backend dependencies or cloud tracking.
+A local-first music player that turns your browser into a personal listening studio. Import audio files from your device, organize your listening queue, and shape playback with studio-style audio effects — without uploading your music to a server.
 
-## Core Features
-* **16D HRTF Spatial Audio:** Hardware-accelerated 3D soundstage using Head-Related Transfer Functions (`PannerNode`) and synthetic room reverb convolvers for an authentic concert hall illusion. Includes automatic sub-bass compensation and makeup gain.
-* **Studio Equalization:** A parametric EQ featuring pre-configured profiles (Bass Boost, Vocal, Pop, Rock) to customize the frequency response of your local tracks on the fly.
-* **Dynamic Environments:** The UI reacts to your music by extracting ID3 metadata (via `jsmediatags`) and generating high-radius blurred backgrounds from embedded album art.
-* **Algorithmic Visualizers:** Real-time canvas rendering of frequency and time-domain data, featuring standard Frequency Bars, Waveforms, Pulse dynamics, and beat-reactive gravity Particles.
-* **Advanced Playback Engine:** Seamless crossfading track transitions, a dedicated "Up Next" queue system, and full playback speed control (0.5x to 2.0x).
-* **Glassmorphic UI & Vinyl Mode:** A fully responsive, dark-themed interface with an optional aesthetic toggle that transforms static album art into a rotating vinyl disc tied to the active playback state.
+<p align="center">
+  <img src="docs/screenshots/player-desktop.png" alt="AKKI Studio music player on desktop" width="720">
+</p>
 
-## Technical Architecture
+<p align="center">
+  <img src="docs/screenshots/player-mobile.png" alt="AKKI Studio music player on mobile" width="320">
+</p>
 
-| Component | Technology Utilized |
-| :--- | :--- |
-| **Frontend Core** | Vanilla JavaScript (ES6+), HTML5, CSS3 (CSS Variables, Glassmorphism) |
-| **Audio Processing** | Web Audio API (`AudioContext`, `BiquadFilterNode`, `ConvolverNode`) |
-| **Metadata Parsing** | `jsmediatags.min.js` (Client-side ID3 tag extraction) |
-| **Data Persistence** | Browser `localStorage` (Favorites array, Theme state, EQ preferences) |
+## Live demo
 
-## Quick Start
-1. Clone or download the repository to your local machine.
-2. Open `index.html` in any modern web browser (Chrome, Firefox, Safari, Edge).
-3. Drag and drop your local audio files (`.mp3`, `.wav`, `.flac`, `.m4a`) into the drop zone, or click to browse.
-4. Put on headphones to accurately experience the 16D spatial audio effect.
+**[Open AKKI MUSIC on GitHub Pages](https://akki-9605.github.io/Music-app-v2/)**
 
-## Keyboard Shortcuts
-* **Space** – Play/Pause
-* **Arrow Left/Right** – Seek backward/forward 5 seconds
-* **Arrow Up/Down** – Adjust volume
-* **M** – Mute/Unmute
-* **N / P** – Next / Previous track
-* **Q** – Toggle Up Next Queue
-* **F** – Toggle Favorites filter
-* **/** – Focus Search bar
+The app runs in your browser. Your audio files are selected locally and are not uploaded to an app backend.
+
+## Features
+
+- **Local audio library:** Import multiple audio files using the file picker or drag and drop.
+- **Track metadata and artwork:** Read supported embedded tags and display album artwork with the track.
+- **Playback controls:** Play, pause, skip, seek, adjust volume, and control playback speed.
+- **Queue and shuffle:** Add tracks to an Up Next queue, shuffle playback, and switch repeat modes.
+- **Favorites, search, and sorting:** Save favorite tracks, filter the playlist, search by track details, and sort by title or artist.
+- **Studio EQ:** Choose Flat, Bass Boost, Vocal, Pop, or Rock presets.
+- **16D spatial audio:** Optional HRTF panning and synthetic reverb using the Web Audio API.
+- **Live visualizers:** Frequency bars, waveform, pulse, and particle modes.
+- **Personalization:** Accent color, dark/AMOLED theme, vinyl artwork mode, and saved playback preferences.
+
+## Run locally
+
+No build step or backend is required.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/AKKI-9605/Music-app-v2.git
+   cd Music-app-v2
+   ```
+2. Start a local static server:
+   ```bash
+   python3 -m http.server 8000
+   ```
+3. Open [http://localhost:8000](http://localhost:8000).
+4. Import audio files from your device.
+
+You can also open `index.html` directly, although a local server is recommended for consistent browser behavior.
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| Space | Play / pause |
+| Left / Right | Seek backward / forward 5 seconds |
+| Up / Down | Adjust volume |
+| M | Mute / unmute |
+| N / P | Next / previous track |
+| Q | Toggle Up Next queue |
+| F | Toggle favorites filter |
+| / | Focus playlist search |
+| Escape | Close settings / leave search |
+
+## Tests
+
+The project uses Playwright browser tests to check the initial player interface, settings interactions, keyboard search shortcut, and mobile layout. The test run also captures desktop and mobile screenshots used above.
+
+Install dependencies and the Chromium browser:
+
+```bash
+npm install
+npx playwright install chromium
+```
+
+Run the tests:
+
+```bash
+npm test
+```
+
+## Deployment
+
+The GitHub Actions workflow in `.github/workflows/ci-pages.yml` runs the browser tests on pushes to `main`. On successful runs it refreshes the README screenshots and deploys the app to GitHub Pages.
+
+Live site: **https://akki-9605.github.io/Music-app-v2/**
+
+## Built with
+
+- HTML5, CSS3, and vanilla JavaScript
+- Web Audio API
+- Canvas API
+- [jsmediatags](https://github.com/aadsm/jsmediatags) for supported audio metadata
+- [Font Awesome](https://fontawesome.com/) for interface icons
+- Playwright for browser testing
+
+## Privacy
+
+Playback is client-side. The app does not include an account system, music catalog, streaming service, or app backend. Imported audio files are handled in the browser; metadata and preferences are processed locally. External CDN resources are used for the metadata and icon libraries.
