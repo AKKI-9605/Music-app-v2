@@ -211,6 +211,91 @@
         @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 480px) { .app-container { border-radius: 0; height: 100vh; max-height: none; width: 100vw; border: none; } .glass-case { padding: 0; border: none; box-shadow: none; border-radius: 0; } }
+    
+        /* Responsive refinement: desktop, iPad/tablet, and iPhone layouts */
+        body {
+            background: radial-gradient(ellipse at 18% 8%, #182b42 0%, #080c15 42%, #03050a 100%);
+            overscroll-behavior: none;
+        }
+        .glass-case {
+            background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+            border-color: rgba(255,255,255,.12);
+        }
+        .app-container {
+            background: linear-gradient(155deg, rgba(19,24,38,.97), rgba(7,10,18,.985));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 22px 70px rgba(0,0,0,.38);
+        }
+        .controls-dock {
+            background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(0,0,0,.42));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+        }
+        .icon-btn, .mute-btn, .ctrl-btn { touch-action: manipulation; }
+        button:focus-visible, input:focus-visible, select:focus-visible, .progress-bar-wrapper:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
+        .progress-bar-wrapper { min-height: 10px; touch-action: pan-y; }
+        .track-row { background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.025); }
+        .track-row.active { background: color-mix(in srgb, var(--accent) 13%, rgba(255,255,255,.055)); }
+        .album-art-container { box-shadow: 0 18px 46px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.035); }
+        .upload-zone { min-height: 44px; }
+        .modal { padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+        @media (min-width: 1181px) {
+            body { padding: 28px; }
+            .glass-case { padding: 18px; }
+            .app-container { width: min(42vw, 500px); max-width: 500px; height: min(92dvh, 900px); padding: 26px; gap: 18px; }
+            .album-art-container { width: 196px; height: 196px; }
+            .controls-dock { padding: 18px 20px; }
+        }
+        @media (min-width: 600px) and (max-width: 1180px) {
+            body { min-height: 100dvh; height: 100dvh; padding: 18px; overflow: auto; }
+            .glass-case { width: min(100%, 760px); padding: 14px; border-radius: 34px; }
+            .app-container { width: min(88vw, 720px); min-width: 0; max-width: 720px; height: min(94dvh, 1020px); min-height: 680px; padding: 26px; gap: 17px; border-radius: 26px; }
+            .album-art-container { width: clamp(184px, 25vw, 236px); height: clamp(184px, 25vw, 236px); }
+            .track-row { min-height: 58px; padding: 12px; }
+            .ctrl-btn { width: 46px; height: 46px; }
+            .ctrl-btn.main-play { width: 58px; height: 58px; }
+            .search-bar, .playlist-tools select { min-height: 44px; }
+        }
+        @media (max-width: 599px) {
+            html, body { width: 100%; min-height: 100%; }
+            body { display: block; min-height: 100dvh; height: 100dvh; padding: 0; overflow: hidden; }
+            .glass-case { width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+            .app-container { width: 100%; min-width: 0; max-width: none; height: 100%; min-height: 0; max-height: none; padding: max(12px, env(safe-area-inset-top)) 15px max(12px, env(safe-area-inset-bottom)); gap: 10px; border: 0; border-radius: 0; }
+            .header { min-height: 42px; flex-shrink: 0; }
+            .upload-zone { min-height: 42px; padding: 9px; flex-shrink: 0; }
+            .album-art-container { width: clamp(108px, 31vw, 148px); height: clamp(108px, 31vw, 148px); border-radius: 22px; }
+            .track-info { margin: 0; flex-shrink: 0; }
+            .marquee-content { font-size: 16px; }
+            .playlist-wrapper { gap: 8px; }
+            .playlist-tools { gap: 6px; }
+            .search-bar { min-height: 44px; font-size: 14px; }
+            .playlist-tools select { min-height: 44px; }
+            .track-row { min-height: 54px; padding: 8px; gap: 9px; }
+            .row-actions { opacity: 1; gap: 12px; }
+            .row-actions i { padding: 8px 3px; }
+            .controls-dock { padding: 10px 12px; border-radius: 20px; gap: 9px; flex-shrink: 0; }
+            .progress-bar-wrapper { height: 8px; }
+            .buttons-container { padding: 0 2px; }
+            .ctrl-btn { width: 42px; height: 42px; font-size: 16px; }
+            .ctrl-btn.main-play { width: 54px; height: 54px; }
+            .mute-btn { width: 42px; height: 42px; }
+            .modal { padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
+            .setting-group { gap: 12px; }
+            .setting-group select, .setting-group input { max-width: 52%; }
+        }
+        @media (max-height: 720px) and (max-width: 599px) {
+            .app-container { gap: 7px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+            .album-art-container { width: 100px; height: 100px; }
+            .upload-zone { min-height: 36px; }
+            .controls-dock { padding: 7px 10px; gap: 6px; }
+            .ctrl-btn { height: 38px; }
+            .ctrl-btn.main-play { height: 46px; width: 46px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+        }
+
     </style>
 </head>
 <body>
