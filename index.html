@@ -569,7 +569,7 @@
             fadeAudio(targetVol, duration, callback) {
                 clearInterval(this.fadeInterval);
                 const gainParam = this.masterGain && this.audioCtx ? this.masterGain.gain : null;
-                const startVol = gainParam ? gainParam.value : this.audio.volume;
+                const startVol = targetVol === 0 ? this.outputLevel : 0;
                 const distance = targetVol - startVol;
                 
                 if (distance === 0) {
